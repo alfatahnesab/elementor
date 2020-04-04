@@ -1,48 +1,45 @@
 <?php
 /**
  * Plugin Name: Elementor Form Create New User
- * Description: Create a new user using elementor form
+ * Description: Create a new user using elementor pro form
  * Author:      Alfatah Nesab
  * Author URI:  https://alfatahnesab.com
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
-add_action( 'elementor_pro/forms/new_record',  'alfa_elementor_form_create_new_user' , 10, 2 );
+add_action( 'elementor_pro/forms/new_record',  'alfa_elementor_form_create_new_user' , 10, 2 ); // This is the hooks of elementor form after form submit
 
-function alfa_elementor_form_create_new_user($record,$ajax_handler)
+function alfa_elementor_form_create_new_user($record,$ajax_handler) // creating function 
 {
     $form_name = $record->get_form_settings('form_name');
-    //Check that the form is the "create new user form" if not - stop and return;
-    if ('Create New User' !== $form_name) {
+    
+    //Check that the form is the "Sign Up" if not - stop and return;
+    if ('Sign Up' !== $form_name) {
         return;
     }
     
     $form_data = $record->get_formatted_data();
+ 
+ //Get tne value of the input with the label  
+    $username=$form_data['Email']; // You can choose any form field as username, but it should be unique.  
+    $password = $form_data['Password'];  // Label "Password"
+    $email=$form_data['Email'];  // Label "Email"
     
-    $username=$form_data['Email']; //Get tne value of the input with the label "User Name"
-    $password = $form_data['Password']; //Get tne value of the input with the label "Password"
-    $email=$form_data['Email'];  //Get tne value of the input with the label "Email"
-    $redirect=$form_data['Page Redirect URL'];  //Get tne value of the input with the label "Email"
-    $phone=$form_data['Phone Number'];  //Get tne value of the input with the label "Phone Number"
-    $practice=$form_data['Practice Field'];  //Get tne value of the input with the label "Practice Field"
-    $role=$form_data['Role'];  //Get tne value of the input with the label "Role"
-
-		
-    $user = wp_create_user($username,$password,$email); // Create a new user, on success return the user_id no failure return an error object
+    // This is the required field to create a user in wordpress. Let create user with wordpress function wp_create_user();
+		//wp_create_user( string $username, string $password, string $email = '' )
+	$user = wp_create_user($username,$password,$email); // Create a new user, on success return the user_id no failure return an error object
 
     if (is_wp_error($user)){ // if there was an error creating a new user
         $ajax_handler->add_error_message("Failed to create new user: ".$user->get_error_message()); //add the message
         $ajax_handler->is_success = false;
         return;
     }
-    
-    $first_name=$form_data["First Name"]; //Get tne value of the input with the label "First Name"
-    $last_name=$form_data["Last Name"]; //Get tne value of the input with the label "Last Name"
-       
+  // Before Add user meta data we need to get the value of First Name and Last Name in the variable. Like below:
+    	$first_name=$form_data["First Name"]; //Get tne value of the input with the label "First Name"
+    	$last_name=$form_data["Last Name"]; //Get tne value of the input with the label "Last Name"
+
+  // Now we are going to add user related information which is called user meta data with the function wp_update_user
 	wp_update_user(array("ID"=>$user,"first_name"=>$first_name,"last_name"=>$last_name)); // Update the user with the first name and last name
-	update_user_meta( $user, 'user_role', $role ); 
-	update_user_meta( $user, 'user_phone', $phone ); 
-	update_user_meta( $user, 'user_practice', $practice ); 
 
     /* Automatically log in the user and redirect the user to the home page */
     $creds= array( // credientials for newley created user
@@ -53,7 +50,7 @@ function alfa_elementor_form_create_new_user($record,$ajax_handler)
     
     $signon = wp_signon($creds); // sign in the new user
     if ($signon)
+      
       // Set redirect action
-	$ajax_handler->add_response_data( 'redirect_url', $redirect );
-      //  $ajax_handler->add_response_data( 'redirect_url', get_home_url() ); // optinal - if sign on succsfully - redierct the user to the home page
+      $ajax_handler->add_response_data( 'redirect_url', get_home_url() ); // optinal - if sign on succsfully - redierct the user to the home page
 }
