@@ -5,9 +5,10 @@
  * Author:      Alfatah Nesab
  * Author URI:  https://alfatahnesab.com
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Version:     1.0.0
  */
 
-add_action( 'elementor_pro/forms/new_record',  'alfa_elementor_form_create_new_user' , 10, 2 ); // This is the hooks of elementor form after form submit
+add_action( 'elementor_pro/forms/new_record',  'alfa_elementor_form_create_new_user' , 10, 2 );
 
 function alfa_elementor_form_create_new_user($record,$ajax_handler) // creating function 
 {
@@ -18,39 +19,42 @@ function alfa_elementor_form_create_new_user($record,$ajax_handler) // creating 
         return;
     }
     
-    $form_data = $record->get_formatted_data();
+    $form_data  = $record->get_formatted_data();
  
- //Get tne value of the input with the label  
-    $username=$form_data['Email']; // You can choose any form field as username, but it should be unique.  
-    $password = $form_data['Password'];  // Label "Password"
-    $email=$form_data['Email'];  // Label "Email"
-    
-    // This is the required field to create a user in wordpress. Let create user with wordpress function wp_create_user();
-		//wp_create_user( string $username, string $password, string $email = '' )
-	$user = wp_create_user($username,$password,$email); // Create a new user, on success return the user_id no failure return an error object
+    $username   = $form_data['Email'];
+    $email      = $form_data['Email']; 
+    $password   = $form_data['Password']; 
 
-    if (is_wp_error($user)){ // if there was an error creating a new user
-        $ajax_handler->add_error_message("Failed to create new user: ".$user->get_error_message()); //add the message
+    
+    $user = wp_create_user($username,$password,$email); 
+
+    if (is_wp_error($user)){ 
+        $ajax_handler->add_error_message("Failed to create new user: ".$user->get_error_message()); 
         $ajax_handler->is_success = false;
         return;
     }
-  // Before Add user meta data we need to get the value of First Name and Last Name in the variable. Like below:
-    	$first_name=$form_data["First Name"]; //Get tne value of the input with the label "First Name"
-    	$last_name=$form_data["Last Name"]; //Get tne value of the input with the label "Last Name"
 
-  // Now we are going to add user related information which is called user meta data with the function wp_update_user
-	wp_update_user(array("ID"=>$user,"first_name"=>$first_name,"last_name"=>$last_name)); // Update the user with the first name and last name
+    // Assign Primary field value in the created user profile
+    $first_name   =$form_data["First Name"]; 
+    $last_name    =$form_data["Last Name"];
+    wp_update_user(array("ID"=>$user,"first_name"=>$first_name,"last_name"=>$last_name)); 
+
+    // Assign Additional added field value in the created user profile
+    $user_phone   =$form_data["First Name"]; 
+    $user_bio     =$form_data["Last Name"];
+    update_user_meta($user, 'user_phone', $user_phone);    
+    update_user_meta($user, 'user_bio', $user_bio); 
 
     /* Automatically log in the user and redirect the user to the home page */
-    $creds= array( // credientials for newley created user
+    $creds= array(
         "user_login"=>$username,
         "user_password"=>$password,
         "remember"=>true
     );
     
-    $signon = wp_signon($creds); // sign in the new user
-    if ($signon)
-      
-      // Set redirect action
-      $ajax_handler->add_response_data( 'redirect_url', get_home_url() ); // optinal - if sign on succsfully - redierct the user to the home page
-}
+    $signon = wp_signon($creds); 
+    
+    if ($signon) {
+        $ajax_handler->add_response_data( 'redirect_url', get_home_url() );
+    }
+} 
