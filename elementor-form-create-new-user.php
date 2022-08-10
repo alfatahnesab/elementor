@@ -40,8 +40,8 @@ function alfa_elementor_form_create_new_user($record,$ajax_handler) // creating 
     wp_update_user(array("ID"=>$user,"first_name"=>$first_name,"last_name"=>$last_name)); 
 
     // Assign Additional added field value in the created user profile
-    $user_phone   =$form_data["First Name"]; 
-    $user_bio     =$form_data["Last Name"];
+    $user_phone   =$form_data["Phone"]; 
+    $user_bio     =$form_data["Bio"];
     update_user_meta($user, 'user_phone', $user_phone);    
     update_user_meta($user, 'user_bio', $user_bio); 
 
